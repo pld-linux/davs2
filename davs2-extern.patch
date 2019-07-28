@@ -1,0 +1,125 @@
+--- davs2-1.6/source/common/cpu.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/cpu.cc	2019-07-28 18:27:20.653314967 +0200
+@@ -166,6 +166,9 @@
+ 
+ #if !ARCH_X86_64
+ /*  */
++#ifdef __cplusplus
++extern "C"
++#endif
+ int  davs2_cpu_cpuid_test(void);
+ #endif
+ 
+--- davs2-1.6/source/common/intra.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/intra.cc	2019-07-28 20:01:18.669437878 +0200
+@@ -2631,7 +2631,7 @@
+     ipred[INTRA_ANG_Y_31]  = intra_pred_ang_y_31_c;
+     ipred[INTRA_ANG_Y_32]  = intra_pred_ang_y_32_c;
+ 
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & DAVS2_CPU_SSE4) {
+ #if !HIGH_BIT_DEPTH
+         ipred[DC_PRED   ] = intra_pred_dc_sse128;
+--- davs2-1.6/source/common/sao.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/sao.cc	2019-07-28 20:26:41.584520873 +0200
+@@ -645,7 +645,7 @@
+     fh->sao_filter_eo[SAO_TYPE_EO_135] = sao_block_eo_135_c;
+ 
+     /* init asm function handles */
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & DAVS2_CPU_SSE4) {
+         fh->sao_block_bo                   = SAO_on_block_bo_sse128;
+         fh->sao_filter_eo[SAO_TYPE_EO_0]   = SAO_on_block_eo_0_sse128;
+--- davs2-1.6/source/common/mc.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/mc.cc	2019-07-28 20:27:48.334159259 +0200
+@@ -673,7 +673,7 @@
+     pf->intpl_chroma_ext[1] = intpl_chroma_block_ext_c;
+ 
+     /* init asm function handles */
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if (cpuid & DAVS2_CPU_SSE42) {
+ #if HIGH_BIT_DEPTH
+         //10bit assemble
+--- davs2-1.6/source/common/memory.cc.orig	2019-07-28 20:42:21.959426425 +0200
++++ davs2-1.6/source/common/memory.cc	2019-07-28 20:42:36.049350093 +0200
+@@ -70,6 +70,7 @@
+         // pf->memzero_aligned = davs2_memzero_aligned_sse;
+     }
+ 
++#if ARCH_X86_64
+     if (cpuid & DAVS2_CPU_SSE2) {
+         pf->memzero_aligned = davs2_memzero_aligned_c_sse2;
+         // gf_davs2.memcpy_aligned  = davs2_memcpy_aligned_c_sse2;
+@@ -78,5 +79,6 @@
+     if (cpuid & DAVS2_CPU_AVX2) {
+         pf->memzero_aligned = davs2_memzero_aligned_c_avx;
+     }
++#endif // ARCH_X86_64
+ #endif // HAVE_MMX
+ }
+--- davs2-1.6/source/common/transform.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/transform.cc	2019-07-28 20:32:37.265927315 +0200
+@@ -957,11 +957,14 @@
+ #if HAVE_MMX
+     /* functions defined in file intrinsic_dct.c */
+     if (cpuid & DAVS2_CPU_SSE2) {
++#if ARCH_X86_64
+         fh->inv_transform_4x4_2nd = inv_transform_4x4_2nd_sse128;
+         fh->inv_transform_2nd     = inv_transform_2nd_sse128;
++#endif
+ 
+         for (i = 0; i < DCT_PATTERN_NUM; i++) {
+             fh->idct[PART_4x4  ][i] = idct_4x4_sse128;
++#if ARCH_X86_64
+             fh->idct[PART_8x8  ][i] = idct_8x8_sse128;
+             fh->idct[PART_16x16][i] = idct_16x16_sse128;
+             fh->idct[PART_32x32][i] = idct_32x32_sse128;
+@@ -973,6 +974,7 @@
+             fh->idct[PART_8x32][i] = idct_8x32_sse128;
+             fh->idct[PART_16x4][i] = idct_16x4_sse128;
+             fh->idct[PART_32x8][i] = idct_32x8_sse128;
++#endif
+ 
+ #if !HIGH_BIT_DEPTH
+             fh->idct[PART_4x4 ][i] = FPFX(idct_4x4_sse2);
+@@ -993,6 +995,7 @@
+         }
+     }
+ 
++#if ARCH_X86_64
+     /* TODO: 初始化非默认DCT模板 */
+     if (cpuid & DAVS2_CPU_SSE2) {
+         /* square */
+@@ -1020,7 +1023,6 @@
+         fh->idct[PART_64x16][DCT_QUAD] = idct_64x16_quad_sse128;
+     }
+ 
+-#if ARCH_X86_64
+     if (cpuid & DAVS2_CPU_AVX2) {
+         fh->idct[PART_8x8  ][DCT_DEAULT]   = idct_8x8_avx2;
+         fh->idct[PART_16x16][DCT_DEAULT] = idct_16x16_avx2;
+--- davs2-1.6/source/common/alf.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/alf.cc	2019-07-28 20:40:29.020038270 +0200
+@@ -513,7 +513,7 @@
+     fh->alf_block[1] = alf_filter_block2;
+ 
+     /* init asm function handles */
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+ #if HIGH_BIT_DEPTH
+ #else
+     if (cpuid & DAVS2_CPU_SSE4) {
+--- davs2-1.6/source/common/deblock.cc.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/source/common/deblock.cc	2019-07-28 20:41:35.926342474 +0200
+@@ -561,7 +561,7 @@
+     fh->set_deblock_const = NULL;
+ 
+     /* init asm function handles */
+-#if HAVE_MMX
++#if HAVE_MMX && ARCH_X86_64 /* only 64-bit asm for now */
+     if ((cpuid & DAVS2_CPU_SSE4) && !HDR_CHROMA_DELTA_QP) {
+ #if !HIGH_BIT_DEPTH
+         fh->deblock_luma  [0] = deblock_edge_ver_sse128;
