@@ -7,7 +7,7 @@ Summary:	Open-source decoder of AVS2-P2/IEEE1857.4 video coding standard
 Summary(pl.UTF-8):	Dekoder standardu kodowania obrazu AVS2-P2/IEEE1857.4 o otwartych źródłach
 Name:		davs2
 Version:	1.6
-Release:	1
+Release:	2
 License:	GPL v2+
 Group:		Libraries
 #Source0Download: https://github.com/pkuvcl/davs2/releases
@@ -15,13 +15,16 @@ Source0:	https://github.com/pkuvcl/davs2/archive/%{version}/%{name}-%{version}.t
 # Source0-md5:	c8861c1220c05a172b9ce472cbf929af
 Patch0:		%{name}-extern.patch
 Patch1:		%{name}-gcc8-fix.patch
+Patch2:		%{name}-opt.patch
 URL:		https://github.com/pkuvcl/davs2
 %{?with_opencl:BuildRequires:	OpenCL-devel}
 BuildRequires:	libstdc++-devel >= 6:4.7
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.674
 BuildRequires:	sed >= 4.0
+%ifarch %{ix86} %{x8664}
 BuildRequires:	yasm >= 1.2.0
+%endif
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -61,6 +64,7 @@ Statyczna biblioteka davs2.
 
 %undos source/common/vec/intrinsic_{deblock_avx2,idct_avx2,inter_pred,inter_pred_avx2,intra-pred_avx2,pixel_avx,sao_avx2}.cc
 %patch1 -p1
+%patch2 -p1
 
 %build
 cd build/linux
@@ -76,6 +80,9 @@ LDFLAGS="%{rpmldflags} -Wl,-z,noexecstack" \
 	--bindir=%{_bindir} \
 	--includedir=%{_includedir} \
 	--libdir=%{_libdir} \
+%ifarch x32
+	--disable-asm \
+%endif
 	%{!?with_opencl:--disable-opencl} \
 	--enable-pic \
 	--enable-shared \

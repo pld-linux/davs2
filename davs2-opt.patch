@@ -1,0 +1,27 @@
+--- davs2-1.6/build/linux/configure.orig	2018-11-15 09:15:32.000000000 +0100
++++ davs2-1.6/build/linux/configure	2019-08-07 18:54:44.563834364 +0200
+@@ -659,16 +659,6 @@
+         AS_EXT=".asm"
+         CFLAGS="$CFLAGS -DARCH_X86_64=0"
+         ASFLAGS="$ASFLAGS -DARCH_X86_64=0 -I\$(SRCPATH)/common/x86/"
+-        if [ $compiler = GNU ]; then
+-            if [[ "$asm" == auto && "$CFLAGS" != *-march* ]]; then
+-                CFLAGS="$CFLAGS -march=i686"
+-            fi
+-            if [[ "$asm" == auto && "$CFLAGS" != *-mfpmath* ]]; then
+-                CFLAGS="$CFLAGS -mfpmath=sse -msse -msse2"
+-            fi
+-            CFLAGS="-m32 $CFLAGS"
+-            LDFLAGS="-m32 $LDFLAGS"
+-        fi
+         if [ "$SYS" = MACOSX ]; then
+             ASFLAGS="$ASFLAGS -f macho32 -DPREFIX"
+         elif [ "$SYS" = WINDOWS -o "$SYS" = CYGWIN ]; then
+@@ -687,7 +677,6 @@
+         CFLAGS="$CFLAGS -DARCH_X86_64=1"
+         ASFLAGS="$ASFLAGS -DARCH_X86_64=1 -I\$(SRCPATH)/common/x86/"
+         stack_alignment=16
+-        [ $compiler = GNU ] && CFLAGS="-m64 $CFLAGS" && LDFLAGS="-m64 $LDFLAGS"
+         if [ "$SYS" = MACOSX ]; then
+             ASFLAGS="$ASFLAGS -f macho64 -DPIC -DPREFIX"
+             if cc_check '' "-arch x86_64"; then
