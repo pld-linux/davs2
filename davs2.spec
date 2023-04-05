@@ -1,20 +1,20 @@
 #
 # Conditional build:
-%bcond_without	static_libs	# don't build static libraries
+%bcond_without	static_libs	# static library
 %bcond_without	opencl		# OpenCL features
 #
 Summary:	Open-source decoder of AVS2-P2/IEEE1857.4 video coding standard
 Summary(pl.UTF-8):	Dekoder standardu kodowania obrazu AVS2-P2/IEEE1857.4 o otwartych źródłach
 Name:		davs2
-Version:	1.6
-Release:	2
+Version:	1.7
+Release:	1
 License:	GPL v2+
 Group:		Libraries
-#Source0Download: https://github.com/pkuvcl/davs2/releases
+#Source0Download: https://github.com/pkuvcl/davs2/tags
 Source0:	https://github.com/pkuvcl/davs2/archive/%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	c8861c1220c05a172b9ce472cbf929af
+# Source0-md5:	d1558a5413b6691ad9c867cbd5c765aa
 Patch0:		%{name}-extern.patch
-Patch1:		%{name}-gcc8-fix.patch
+Patch1:		%{name}-x86.patch
 Patch2:		%{name}-opt.patch
 URL:		https://github.com/pkuvcl/davs2
 %{?with_opencl:BuildRequires:	OpenCL-devel}
@@ -61,8 +61,6 @@ Statyczna biblioteka davs2.
 %prep
 %setup -q
 %patch0 -p1
-
-%undos source/common/vec/intrinsic_{deblock_avx2,idct_avx2,inter_pred,inter_pred_avx2,intra-pred_avx2,pixel_avx,sao_avx2}.cc
 %patch1 -p1
 %patch2 -p1
 
